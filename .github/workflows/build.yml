@@ -19,10 +19,19 @@ jobs:
           flutter-version: '3.19.0'
           channel: 'stable'
 
+      - name: Show repo contents (debug)
+        run: find . -maxdepth 3 -not -path '*/.git*'
+
       - name: Stash your app code
         run: |
+          LIB_DIR=$(find . -type d -name lib -not -path '*/.git*' | head -n 1)
+          if [ -z "$LIB_DIR" ]; then
+            echo "::error::No 'lib' folder found anywhere in the repo. Check the 'Show repo contents' step above to see what was actually uploaded."
+            exit 1
+          fi
+          echo "Found lib at: $LIB_DIR"
           mkdir -p /tmp/app_src
-          cp -r lib /tmp/app_src/
+          cp -r "$LIB_DIR" /tmp/app_src/
 
       - name: Scaffold a fresh Flutter project (generates pubspec.yaml, android/, etc.)
         run: flutter create --org com.vrcportal --project-name vrchat_mobile_app .
