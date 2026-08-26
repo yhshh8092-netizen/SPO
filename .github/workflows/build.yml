@@ -41,6 +41,9 @@ jobs:
           mkdir -p /tmp/app_src
           cp -r "$LIB_DIR" /tmp/app_src/
 
+      - name: Remove any leftover project files before scaffolding
+        run: rm -rf pubspec.yaml pubspec.lock android ios web macos linux windows
+
       - name: Scaffold a fresh Flutter project (generates pubspec.yaml, android/, etc.)
         run: flutter create --org com.vrcportal --project-name vrchat_mobile_app .
 
