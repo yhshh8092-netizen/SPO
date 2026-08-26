@@ -1,39 +1,51 @@
 name: Build Android APK
 
-        on:
-          push:
-            branches: [ main, master ]
-          pull_request:
-            branches: [ main, master ]
-          workflow_dispatch:
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-        jobs:
-          build-android:
-            runs-on: ubuntu-latest
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
 
-            steps:
-              - name: Checkout code
-                uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-              - name: Setup Flutter
-                uses: subosito/flutter-action@v2
-                with:
-                  flutter-version: '3.19.0'
-                  channel: 'stable'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
 
-              - name: Install dependencies
-                run: flutter pub get
+      - name: Stash your app code
+        run: |
+          mkdir -p /tmp/app_src
+          cp -r lib /tmp/app_src/
 
-              - name: Setup Android SDK
-                uses: android-actions/setup-android@v3
+      - name: Scaffold a fresh Flutter project (generates pubspec.yaml, android/, etc.)
+        run: flutter create --org com.vrcportal --project-name vrchat_mobile_app .
 
-              - name: Build APK
-                run: flutter build apk --release --split-per-abi
+      - name: Drop your app code back in
+        run: |
+          rm -rf lib
+          cp -r /tmp/app_src/lib .
 
-              - name: Upload APK artifacts
-                uses: actions/upload-artifact@v4
-                with:
-                  name: vrchat-mobile-apk
-                  path: |
-                    build/app/outputs/flutter-apk/app-*-release.apk
-                  retention-days: 14
+      - name: Add the packages the app needs
+        run: |
+          flutter pub add provider dio flutter_staggered_animations cached_network_image
+          flutter pub add "vrchat_dart:^3.5.3"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vrchat-mobile-apk
+          path: build/app/outputs/flutter-apk/app-*-release.apk
+          retention-days: 14
