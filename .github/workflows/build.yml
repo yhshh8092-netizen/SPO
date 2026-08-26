@@ -22,6 +22,14 @@ jobs:
       - name: Show repo contents (debug)
         run: find . -maxdepth 3 -not -path '*/.git*'
 
+      - name: Unzip anything that's still zipped
+        run: |
+          shopt -s nullglob
+          for z in *.zip **/*.zip; do
+            echo "Unzipping $z"
+            unzip -o "$z" -d .
+          done
+
       - name: Stash your app code
         run: |
           LIB_DIR=$(find . -type d -name lib -not -path '*/.git*' | head -n 1)
